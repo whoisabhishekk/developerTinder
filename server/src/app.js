@@ -3,6 +3,9 @@ const express = require("express");
 const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser")
 const cors = require("cors"); 
+const http = require("http");
+const initializeSocket = require("./utils/socket");
+
 
 //importing api routes
 const authRouter = require("./routes/auth");
@@ -15,7 +18,14 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: process.env.CORS_ORIGIN || function(origin, callback) {
+       
+        if (!origin || origin.startsWith("http://localhost:")) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials:true
 }));
 
@@ -28,6 +38,10 @@ app.use("/",authRouter);
 app.use("/",profileRouter);
 app.use("/",connectionRequestRouter);
 app.use("/",userRouter);
+
+const server = http.createServer(app);
+initializeSocket(server);
+
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -42,7 +56,7 @@ connectDB()
     .then(() => {
         console.log("Database established");
         console.log("CORS_ORIGIN:", process.env.CORS_ORIGIN);
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server is running at port ${PORT}`);
         })
     }).catch(err => {

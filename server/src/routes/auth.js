@@ -5,6 +5,13 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken");
 
+// Cookie options: secure + sameSite:none only in production (HTTPS)
+const isProduction = !!process.env.CORS_ORIGIN;
+const cookieOptions = {
+    httpOnly: true,
+    ...(isProduction && { secure: true, sameSite: 'none' })
+};
+
 //signup api
 authRouter.post("/signup", async (req, res) => {
     try {
@@ -56,9 +63,7 @@ authRouter.post("/login", async (req, res) => {
             //add the token to cookie and send the response to the user
             res.cookie("token", token,{
                 expires: new Date(Date.now() + 8*3600000),
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none'
+                ...cookieOptions
             });
             res.send(user);
 
@@ -77,9 +82,7 @@ authRouter.post("/logout",async(req,res)=>{
     try {
         res.cookie("token",null,{
             expires:new Date(Date.now()),
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none'
+            ...cookieOptions
         });
         res.send("Logout successful");
     } catch (error) {
