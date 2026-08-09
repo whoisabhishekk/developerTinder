@@ -1,4 +1,5 @@
 const socket = require("socket.io");
+const Chat = require("../models/chat");
 
 const initializeSocket = (server)=>{
     const io = socket(server,{
@@ -18,11 +19,36 @@ const initializeSocket = (server)=>{
             
         })
 
-        socket.on("sendMessage",({sender,reciever,message})=>{
+        socket.on("sendMessage",async ({sender,reciever,message})=>{
             const room = [sender,reciever].sort().join("-");
             console.log(`Message from ${sender} to ${reciever}: "${message}"`);
-            console.log(`Broadcasting to room: ${room}`);
-            console.log(`Rooms this socket is in:`, Array.from(socket.rooms));
+
+            // Save message to the database
+            try{
+                const participants = [sender,reciever].sort();
+                // find existing chat or create new one
+                let chat = await Chat.findOne({
+                    participants:participants
+                });
+
+                if(!chat){
+                    chat = new Chat({
+                        participants:participants,
+                        messages:[]
+                    });
+                }
+
+                chat.messages.push({
+                    senderId:sender,
+                    text:message
+                });
+
+                await chat.save();
+
+            } catch(error){
+                console.log("Error saving message: " + error.message);
+            }
+
             io.to(room).emit("messageReceived",{sender,message})
         })
 

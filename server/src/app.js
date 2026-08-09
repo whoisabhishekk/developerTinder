@@ -12,6 +12,7 @@ const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const connectionRequestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
+const chatRouter = require("./routes/chat");
 
 // using middlewares
 const app = express();
@@ -38,6 +39,7 @@ app.use("/",authRouter);
 app.use("/",profileRouter);
 app.use("/",connectionRequestRouter);
 app.use("/",userRouter);
+app.use("/",chatRouter);
 
 const server = http.createServer(app);
 initializeSocket(server);

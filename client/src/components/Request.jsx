@@ -10,24 +10,12 @@ const Request = () => {
 
   const fetchRequests = async () => {
     try {
-      const res = await axios.get(BASE_URL + "/user/requests/received", {
+      const res = await axios.get(BASE_URL + "/user/requests", {
         withCredentials: true,
       });
-      console.log("Requests fetched:", res.data);
       dispatch(addRequests(res.data.data));
     } catch (error) {
-      console.log("Error fetching requests:", error.response?.data || error.message);
-      // Fallback in case the endpoint is actually /user/requests
-      try {
-        const res2 = await axios.get(BASE_URL + "/user/requests", {
-          withCredentials: true,
-        });
-        console.log("Requests fetched (fallback):", res2.data);
-        dispatch(addRequests(res2.data.data));
-      } catch (fallbackError) {
-        console.log("Error fetching requests (fallback):", fallbackError.response?.data || fallbackError.message);
-        dispatch(addRequests([])); // Set empty to avoid blank screen
-      }
+      console.log(error);
     }
   };
 

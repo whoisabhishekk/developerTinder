@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useParams } from 'react-router-dom'
 import { createSocketConnections } from '../utils/socket'
+import axios from 'axios'
+import { BASE_URL } from '../utils/constants'
 
 
 const Chat = () => {
@@ -19,6 +21,23 @@ const Chat = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Fetch old messages from DB
+    const fetchMessages = async ()=>{
+      try{
+        const res = await axios.get(BASE_URL + "/chat/" + targetUserId , {
+          withCredentials:true
+        });
+        // map DB messages to our format {text, sender}
+        const oldMessages = res.data.messages.map(msg=>({
+          text:msg.text,
+          sender: msg.senderId._id || msg.senderId
+        }));
+        setMessages(oldMessages);
+      } catch(error){
+        console.log("Error fetching messages: " + error);
+      }
+    }
+
     const sendMessage = ()=>{
       if(!newMessage.trim() || !socketRef.current) return;
       socketRef.current.emit("sendMessage",{sender:userId , reciever:targetUserId , message:newMessage});
@@ -27,6 +46,10 @@ const Chat = () => {
 
     useEffect(()=>{
       if(!userId || !targetUserId) return;
+
+      // load old messages first
+      fetchMessages();
+
       const socket = createSocketConnections();
       socketRef.current = socket;
 
